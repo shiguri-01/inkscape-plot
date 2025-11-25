@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "*.inx": "xml"
+  },
+  "[xml]": {
+    "editor.defaultFormatter": "redhat.vscode-xml"
+  }
+}

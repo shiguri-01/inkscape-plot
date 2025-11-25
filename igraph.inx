@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+  <name>Igraph</name>
+  <id>org.shiguri.effect.igraph</id>
+  <dependency type="executable" location="inx">src/main.py</dependency>
+
+  <param name="tab" type="notebook">
+    <page name="data" gui-text="データ">
+      <param name="data_text" type="string" appearance="multiline" gui-text="データ：" />
+      <spacer />
+      <param name="data_delim" type="optiongroup" appearance="combo" gui-text="列区切り：">
+        <option value="tab">tab</option>
+        <option value="space">space</option>
+        <option value="comma">,</option>
+        <option value="semicolon">;</option>
+      </param>
+      <spacer size="expand" />
+      <label>行頭に「#」がある場合、その行は無視されます</label>
+    </page>
+
+    <page name="x_axis" gui-text="x軸">
+      <param name="x_scale" type="notebook">
+        <page name="x_axis_linear" gui-text="線形">
+          <hbox indent="1">
+            <param name="x_axis_linear_min" type="float" gui-text="最小値：" min="-999999999999999"
+              max="999999999999999">0</param>
+            <spacer />
+            <param name="x_axis_linear_max" type="float" gui-text="最大値：" min="-999999999999999"
+              max="999999999999999">100</param>
+          </hbox>
+          <spacer />
+
+          <label appearance="header">目盛り線</label>
+          <vbox indent="1">
+            <label appearance="header">メイン目盛り</label>
+            <hbox indent="1">
+              <param name="x_linear_maintick_step" type="float" gui-text="ステップ：" min="0"
+                max="999999999999999">10</param>
+              <spacer />
+              <param name="x_linear_maintick_offset" type="float" gui-text="オフセット："
+                min="-999999999"
+                max="999999999">0</param>
+            </hbox>
+            <spacer size="4" />
+            <label appearance="header">サブ目盛り</label>
+            <hbox indent="1">
+              <param name="x_linear_subtick_step" type="float" gui-text="ステップ：" min="0"
+                max="999999999999999">10</param>
+              <spacer />
+              <param name="x_linear_subtick_offset" type="float" gui-text="オフセット："
+                min="-999999999999999"
+                max="999999999999999">0</param>
+            </hbox>
+            <spacer size="4" />
+            <param name="x_linear_tick_mirror" type="bool" gui-text="反対側にも表示">false</param>
+          </vbox>
+          <spacer />
+
+          <label appearance="header">目盛り数字</label>
+          <hbox indent="1">
+            <param name="x_linear_numtick_step" type="float" gui-text="ステップ："
+              min="0" max="999999999999999">
+              10</param>
+            <spacer />
+            <param name="x_linear_numtick_offset" type="float" gui-text="オフセット："
+              min="-999999999999999" max="999999999999999">
+              0</param>
+          </hbox>
+          <spacer />
+        </page>
+
+        <page name="x_axis_log" gui-text="対数">
+          <hbox indent="1">
+            <param name="x_axis_log_min" type="string" gui-text="最小値：">0.1</param>
+            <spacer />
+            <param name="x_axis_log_max" type="string" gui-text="最大値：">100</param>
+          </hbox>
+          <label indent="1">0.001や1e-3のように設定できます</label>
+          <spacer />
+
+          <label appearance="header">目盛り線</label>
+          <vbox indent="1">
+            <param name="x_log_maintick_visible" type="bool" gui-text="メイン目盛り (1, 10...)">true</param>
+            <param name="x_log_subtick_visible" type="bool" gui-text="サブ目盛り (2, 3...)">true</param>
+            <param name="x_log_tick_mirror" type="bool" gui-text="反対側にも描画">false</param>
+          </vbox>
+          <spacer />
+
+          <label appearance="header">目盛り数字</label>
+          <hbox indent="1">
+            <param name="x_log_numtick_visible" type="bool" gui-text="表示">true</param>
+          </hbox>
+          <spacer />
+        </page>
+      </param>
+      <spacer />
+
+      <label appearance="header">ラベル</label>
+      <param name="x_axis_label" type="string" gui-text="テキスト：" indent="1">x</param>
+      <spacer />
+
+      <label appearance="header">配置</label>
+      <hbox indent="1">
+        <param name="x_axis_placement" type="optiongroup" appearance="combo" gui-text="位置：">
+          <option value="bottom">下</option>
+          <option value="top">上</option>
+        </param>
+        <spacer />
+        <param name="x_axis_pos" type="int" gui-text="外側へのオフセット(px)：" min="-9999" max="9999">
+          0</param>
+      </hbox>
+    </page>
+
+    <page name="y_axis" gui-text="y軸">
+      <param name="y_scale" type="notebook">
+        <page name="y_axis_linear" gui-text="線形">
+          <hbox indent="1">
+            <param name="y_axis_linear_min" type="float" gui-text="最小値：" min="-999999999999999"
+              max="999999999999999">0</param>
+            <spacer />
+            <param name="y_axis_linear_max" type="float" gui-text="最大値：" min="-999999999999999"
+              max="999999999999999">100</param>
+          </hbox>
+          <spacer />
+
+          <label appearance="header">目盛り線</label>
+          <vbox indent="1">
+            <label appearance="header">メイン目盛り</label>
+            <hbox indent="1">
+              <param name="y_linear_maintick_step" type="float" gui-text="ステップ：" min="0"
+                max="999999999999999">10</param>
+              <spacer />
+              <param name="y_linear_maintick_offset" type="float" gui-text="オフセット："
+                min="-999999999"
+                max="999999999">0</param>
+            </hbox>
+            <spacer size="4" />
+            <label appearance="header">サブ目盛り</label>
+            <hbox indent="1">
+              <param name="y_linear_subtick_step" type="float" gui-text="ステップ：" min="0"
+                max="999999999999999">10</param>
+              <spacer />
+              <param name="y_linear_subtick_offset" type="float" gui-text="オフセット："
+                min="-999999999999999"
+                max="999999999999999">0</param>
+            </hbox>
+            <spacer size="4" />
+            <param name="y_linear_tick_mirror" type="bool" gui-text="反対側にも表示">false</param>
+          </vbox>
+          <spacer />
+
+          <label appearance="header">目盛り数字</label>
+          <hbox indent="1">
+            <param name="y_linear_numtick_step" type="float" gui-text="ステップ："
+              min="0" max="999999999999999">
+              10</param>
+            <spacer />
+            <param name="y_linear_numtick_offset" type="float" gui-text="オフセット："
+              min="-999999999999999" max="999999999999999">
+              0</param>
+          </hbox>
+          <spacer />
+        </page>
+
+        <page name="y_axis_log" gui-text="対数">
+          <hbox indent="1">
+            <param name="y_axis_log_min" type="string" gui-text="最小値：">0.1</param>
+            <spacer />
+            <param name="y_axis_log_max" type="string" gui-text="最大値：">100</param>
+          </hbox>
+          <label indent="1">0.001や1e-3のように設定できます</label>
+          <spacer />
+
+          <label appearance="header">目盛り線</label>
+          <vbox indent="1">
+            <param name="y_log_maintick_visible" type="bool" gui-text="メイン目盛り (1, 10...)">true</param>
+            <param name="y_log_subtick_visible" type="bool" gui-text="サブ目盛り (2, 3...)">true</param>
+            <param name="y_log_tick_mirror" type="bool" gui-text="反対側にも描画">false</param>
+          </vbox>
+          <spacer />
+
+          <label appearance="header">目盛り数字</label>
+          <hbox indent="1">
+            <param name="y_log_numtick_visible" type="bool" gui-text="表示">true</param>
+          </hbox>
+          <spacer />
+        </page>
+      </param>
+      <spacer />
+
+      <label appearance="header">ラベル</label>
+      <param name="y_axis_label" type="string" gui-text="テキスト：" indent="1">y</param>
+      <spacer />
+
+      <label appearance="header">配置</label>
+      <hbox indent="1">
+        <param name="y_axis_placement" type="optiongroup" appearance="combo" gui-text="位置：">
+          <option value="left">左</option>
+          <option value="right">右</option>
+        </param>
+        <spacer />
+        <param name="y_axis_pos" type="int" gui-text="外側へのオフセット(px)：" min="-9999" max="9999">
+          0</param>
+      </hbox>
+    </page>
+
+    <page name="plot" gui-text="プロット">
+      <label appearance="header">データ参照</label>
+      <label indent="1">使用するデータの列番号を指定してください (1始まり)</label>
+      <hbox indent="1">
+        <param name="x_column" type="int" gui-text="x列：" indent="1" min="1" max="999">1</param>
+        <spacer />
+        <param name="y_column" type="int" gui-text="y列：" indent="1" min="1" max="999">2</param>
+      </hbox>
+      <spacer />
+
+      <label appearance="header">マーカー</label>
+      <vbox indent="1">
+        <param name="marker_shape" type="optiongroup" appearance="combo" gui-text="形：" indent="1">
+          <option value="circle">○</option>
+          <option value="square">□</option>
+          <option value="diamond">◇</option>
+          <option value="triangle">△</option>
+          <option value="inverted_triangle">▽</option>
+          <option value="none">（なし）</option>
+        </param>
+        <param name="marker_size" type="float" gui-text="サイズ(px)：" min="0.1" max="99">12.0</param>
+        <param name="marker_stroke_width" type="float" gui-text="ストローク幅(px)：" min="0.1" max="99">1.5</param>
+      </vbox>
+    </page>
+
+    <page name="layout" gui-text="タイトル・外枠">
+      <label appearance="header">タイトル</label>
+      <vbox indent="1">
+        <param name="title_text" type="string" gui-text="タイトル："></param>
+        <hbox indent="1">
+          <param name="title_placement" type="optiongroup" appearance="combo" gui-text="位置：">
+            <option value="bottom">下</option>
+            <option value="top">上</option>
+          </param>
+          <spacer />
+          <param name="title_pos" type="int" gui-text="外側へのオフセット(px)：" min="-9999" max="9999">84</param>
+        </hbox>
+      </vbox>
+      <spacer />
+
+      <label appearance="header">外枠</label>
+      <hbox indent="1">
+        <param name="frame_top" type="bool" gui-text="上" indent="1">true</param>
+        <spacer />
+        <separator />
+        <param name="frame_bottom" type="bool" gui-text="下" indent="1">true</param>
+        <spacer />
+        <separator />
+        <param name="frame_left" type="bool" gui-text="左" indent="1">true</param>
+        <spacer />
+        <separator />
+        <param name="frame_right" type="bool" gui-text="右" indent="1">true</param>
+      </hbox>
+    </page>
+
+    <page name="details" gui-text="詳細設定">
+      <label appearance="header">サイズ</label>
+      <hbox indent="1">
+        <param name="plot_width" type="int" gui-text="幅(px)：" min="1" max="99999">400</param>
+        <spacer />
+        <param name="plot_height" type="int" gui-text="高さ(px)：" min="1" max="99999">400</param>
+      </hbox>
+      <spacer />
+
+      <label appearance="header">フォント</label>
+      <param name="font_family" type="string" gui-text="フォントファミリー：" indent="1">sans-serif</param>
+      <hbox indent="1">
+        <param name="title_font_size" type="int" gui-text="タイトル(pt)：" min="1" max="999">16</param>
+        <spacer />
+        <param name="axis_label_font_size" type="int" gui-text="軸ラベル(pt)：" min="1" max="999">16</param>
+        <spacer />
+        <param name="tick_label_font_size" type="int" gui-text="目盛り数字(pt)：" min="1" max="999">14</param>
+      </hbox>
+      <spacer />
+
+      <label appearance="header">線・目盛りスタイル</label>
+      <vbox indent="1">
+        <hbox indent="1">
+          <param name="frame_stroke_width" type="float" gui-text="外枠のストローク幅(px)：" min="0.1" max="99">
+            2.0</param>
+          <spacer />
+          <param name="tick_stroke_width" type="float" gui-text="目盛り線のストローク幅(px)：" min="0.1"
+            max="99">
+            2.0</param>
+        </hbox>
+        <spacer size="4" />
+        <hbox indent="1">
+          <param name="maintick_length" type="float" gui-text="メイン目盛り線の長さ(px)：" min="0" max="99">
+            12.0</param>
+          <spacer />
+          <param name="subtick_length" type="float" gui-text="サブ目盛り線の長さ(px)：" min="0" max="99">8.0</param>
+        </hbox>
+      </vbox>
+    </page>
+  </param>
+  <spacer size="16" />
+  <hbox>
+    <label>描画する項目：</label>
+    <spacer size="4" />
+    <param name="render_x_axis" type="bool" gui-text="x軸">true</param>
+    <spacer />
+    <separator />
+    <param name="render_y_axis" type="bool" gui-text="y軸">true</param>
+    <spacer />
+    <separator />
+    <param name="render_plot" type="bool" gui-text="プロット">true</param>
+    <spacer />
+    <separator />
+    <param name="render_title" type="bool" gui-text="タイトル">true</param>
+    <separator />
+    <param name="render_border" type="bool" gui-text="外枠">true</param>
+  </hbox>
+  <spacer size="4" />
+  <param name="page" type="int" gui-text="描画するページの番号：" min="1" max="99">1</param>
+
+  <effect>
+    <object-type>all</object-type>
+    <effects-menu>
+      <submenu name="Render" />
+    </effects-menu>
+  </effect>
+
+  <script>
+    <command location="inx" interpreter="python">src/main.py</command>
+  </script>
+</inkscape-extension>
