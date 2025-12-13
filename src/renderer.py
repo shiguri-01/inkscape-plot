@@ -25,7 +25,7 @@ def find_existing_graph(parent: inkex.BaseElement, title: str) -> inkex.Group | 
             child_id = child.get("id", "")
             # IDがgraph_id_baseで始まる場合、既存のグラフとみなす
             # make_id関数は "base_XXXX" という形式でIDを生成するため、
-            # "graph-title_" で始まるIDをチェック
+            # "graph-{sanitized_title}_{random_digits}" という形式のIDをチェック
             if child_id.startswith(f"{graph_id_base}_"):
                 return child
     return None
