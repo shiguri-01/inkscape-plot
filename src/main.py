@@ -158,7 +158,6 @@ class RenderGraphExtension(inkex.EffectExtension):
             "--append_to_existing_title", type=inkex.Boolean, default=True
         )
 
-        # Details
         pars.add_argument("--plot_width", type=int, default=400)
         pars.add_argument("--plot_height", type=int, default=400)
         pars.add_argument("--font_family", type=str, default="sans-serif")
