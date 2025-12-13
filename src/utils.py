@@ -10,6 +10,8 @@ def sanitize_id(text: str) -> str:
 
     if len(text) > 50:
         text = text[:50]
+    if not text:
+        text = "untitled"
     return text
 
 
