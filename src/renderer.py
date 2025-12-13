@@ -1,3 +1,5 @@
+from typing import cast
+
 import inkex
 
 from graph import Axis, Frame, Graph, Plot, TickLabel, TickMark, Title
@@ -59,7 +61,7 @@ class InkscapeRenderer:
             root = destination
         else:
             # 新しいルートグループを作成
-            parent, x, y = destination
+            parent, x, y = cast(tuple[inkex.BaseElement, float, float], destination)
 
             graph_id_base = "graph"
             if graph.group_title:
