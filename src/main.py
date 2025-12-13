@@ -154,7 +154,9 @@ class RenderGraphExtension(inkex.EffectExtension):
         pars.add_argument("--frame_right", type=inkex.Boolean, default=True)
 
         # Details
-        pars.add_argument("--append_to_existing_title", type=inkex.Boolean, default=True)
+        pars.add_argument(
+            "--append_to_existing_title", type=inkex.Boolean, default=True
+        )
 
         # Details
         pars.add_argument("--plot_width", type=int, default=400)
@@ -243,6 +245,7 @@ class RenderGraphExtension(inkex.EffectExtension):
             plots=plots,
             frame=frame,
             title=title,
+            group_title=self.options.title_text or None,
         )
 
         style = self._build_style()

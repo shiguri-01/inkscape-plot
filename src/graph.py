@@ -290,3 +290,5 @@ class Graph:
     plots: list[Plot] = field(default_factory=list)
     frame: Frame | None = None
     title: Title | None = None
+    # SVGのルートグループID生成に使うタイトル（タイトル描画のON/OFFとは独立）
+    group_title: str | None = None

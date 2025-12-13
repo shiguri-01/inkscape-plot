@@ -62,8 +62,8 @@ class InkscapeRenderer:
             parent, x, y = destination
 
             graph_id_base = "graph"
-            if graph.title:
-                graph_id_base = f"graph-{sanitize_id(graph.title.text)}"
+            if graph.group_title:
+                graph_id_base = f"graph-{sanitize_id(graph.group_title)}"
 
             root = parent.add(inkex.Group())
             root.set("id", make_id(graph_id_base))
