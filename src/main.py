@@ -1,43 +1,56 @@
 import inkex
+import numpy as np
 
 from graph import (
     Axis,
-    BasicFormatter,
-    Frame,
     Graph,
-    LinearNormalizer,
+    Interval,
+    LinearScale,
     LogMainTicker,
-    LogNormalizer,
+    LogScale,
     LogSubTicker,
-    Plot,
-    Point,
-    Range,
-    ScientificFormatter,
     Series,
     StepTicker,
-    TickLabel,
-    TickMark,
-    Title,
 )
-from renderer import InkscapeRenderer
-from style import (
-    AxisStyle,
-    GraphStyle,
-    MarkerStyle,
-    StrokeStyle,
-    TextStyle,
-    TickStyle,
+from renderer.axis import (
+    AxisLineGenerator,
+    AxisRenderer,
+    BasicFormatter,
+    BottomAxisCoordinateMapper,
+    LabelGenerator,
+    LeftAxisCoordinateMapper,
+    RightAxisCoordinateMapper,
+    ScientificFormatter,
+    TickLabelsGenerator,
+    TickLinesGenerator,
+    TopAxisCoordinateMapper,
 )
+from renderer.plots import PlotsRenderer, create_marker_generator
+from renderer.renderer import (
+    FrameRenderer,
+    GraphPartRenderer,
+    GraphRoot,
+    TitlePlacement,
+    TitleRenderer,
+    render_graph_parts,
+)
+
+# TODO: 軸のmirror対応
+# TODO: 軸の向きの逆転
 
 
 def parse_data(
     data_text: str, x_column: int, y_column: int, delimiter: str
-) -> list[Point]:
-    """データテキストをパースしてPointのリストを返す。"""
-    points: list[Point] = []
+) -> tuple[np.ndarray, np.ndarray]:
+    """データテキストをパースする
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: x座標とy座標の配列"""
+    x_values: list[float] = []
+    y_values: list[float] = []
 
     if not data_text:
-        return points
+        return (np.array([], dtype=float), np.array([], dtype=float))
 
     # Inkscapeからのエスケープされた改行を実際の改行に変換
     data_text = data_text.replace("\\n", "\n").replace("\\t", "\t")
@@ -67,11 +80,19 @@ def parse_data(
             if len(cols) > max(x_column, y_column):
                 x_val = float(cols[x_column])
                 y_val = float(cols[y_column])
-                points.append(Point(x=x_val, y=y_val))
+                x_values.append(x_val)
+                y_values.append(y_val)
         except (ValueError, IndexError):
             continue  # パースエラーはスキップ
 
-    return points
+    return (np.asarray(x_values, dtype=float), np.asarray(y_values, dtype=float))
+
+
+def normalize_text(s: str) -> str | None:
+    trimmed_text = s.strip()
+    if trimmed_text == "":
+        return None
+    return trimmed_text
 
 
 class RenderGraphExtension(inkex.EffectExtension):
@@ -176,231 +197,241 @@ class RenderGraphExtension(inkex.EffectExtension):
         pars.add_argument("--page", type=int, default=1)
 
     def effect(self):
-        """エフェクトのメイン処理。"""
-        # インデックス調整
-        x_column = self.options.x_column - 1
-        y_column = self.options.y_column - 1
-        page_index = self.options.page - 1
+        """エフェクトのメイン処理"""
+        root = self._create_root_for_page()
+        if root is None:
+            return
 
-        # ページのバウンディングボックスを取得
+        graph = self._build_graph()
+
+        renderer_parts: list[GraphPartRenderer] = []
+
+        frame = self._build_frame_renderer()
+        if frame is not None:
+            renderer_parts.append(frame)
+
+        title = self._build_title_renderer()
+        if title is not None:
+            renderer_parts.append(title)
+
+        x_axis = self._build_axis_renderer("x")
+        if x_axis is not None:
+            renderer_parts.append(x_axis)
+
+        y_axis = self._build_axis_renderer("y")
+        if y_axis is not None:
+            renderer_parts.append(y_axis)
+
+        plot = self._build_plots_renderer()
+        if plot is not None:
+            renderer_parts.append(plot)
+
+        render_graph_parts(graph, root, renderer_parts)
+
+    def _create_root_for_page(self) -> GraphRoot | None:
+        """ページを基準にルート要素(GraphRoot)を作成する"""
+        page_index = self.options.page - 1
         try:
             page_bbox = self.svg.get_page_bbox(page_index)
         except IndexError:
             inkex.errormsg("Error: Specified page index is out of range.")
-            return
+            return None
         except Exception as e:
             inkex.errormsg(f"Error retrieving page bbox: {e}")
-            return
+            return None
 
-        # プロットエリアのサイズと位置
-        width = self.svg.viewport_to_unit(f"{self.options.plot_width}px")
-        height = self.svg.viewport_to_unit(f"{self.options.plot_height}px")
+        width = self._px(float(self.options.plot_width))
+        height = self._px(float(self.options.plot_height))
         x = page_bbox.center_x - width / 2
         y = page_bbox.center_y - height / 2
 
-        points = parse_data(
-            self.options.data_text.strip(), x_column, y_column, self.options.data_delim
-        )
-        series = Series(name="data", points=points)
-
-        # 軸を構築（プロットの座標変換に必要なため、描画しない場合も構築する）
-        x_axis = self._build_x_axis()
-        x_axis.visible = self.options.render_x_axis
-        y_axis = self._build_y_axis()
-        y_axis.visible = self.options.render_y_axis
-
-        # プロット
-        plots = []
-        if self.options.render_plot and points:
-            plots.append(Plot(series=series, marker=self.options.marker_shape))
-
-        # 外枠
-        frame = None
-        if self.options.render_border:
-            frame = Frame(
-                top=self.options.frame_top,
-                bottom=self.options.frame_bottom,
-                left=self.options.frame_left,
-                right=self.options.frame_right,
-            )
-
-        # タイトル
-        title = None
-        if self.options.render_title and self.options.title_text:
-            title = Title(
-                text=self.options.title_text,
-                placement=self.options.title_placement,
-                offset=self._px(self.options.title_pos),
-            )
-
-        # グラフ
-        graph = Graph(
-            x_axis=x_axis,
-            y_axis=y_axis,
-            plots=plots,
-            frame=frame,
-            title=title,
-        )
-
-        style = self._build_style()
-
-        # レンダリング
-        renderer = InkscapeRenderer(style)
         layer = self.svg.get_current_layer()
-        renderer.render(graph, layer, x, y, width, height)
 
-    def _build_x_axis(self) -> Axis:
-        """X軸を構築する"""
-        is_log = self.options.x_scale == "x_axis_log"
+        root_group = inkex.Group()
+        root_group.set("id", self.svg.get_unique_id("graph"))
+        root_group.transform.add_translate(x, y)
+        layer.add(root_group)
 
-        if is_log:
-            data_range = Range(
-                min=float(self.options.x_axis_log_min),
-                max=float(self.options.x_axis_log_max),
-            )
-            normalizer = LogNormalizer(base=10)
-
-            main_ticks = None
-            if self.options.x_log_maintick_visible:
-                main_ticks = TickMark(ticker=LogMainTicker(base=10))
-
-            sub_ticks = None
-            if self.options.x_log_subtick_visible:
-                sub_ticks = TickMark(ticker=LogSubTicker(base=10))
-
-            tick_labels = None
-            if self.options.x_log_numtick_visible:
-                tick_labels = TickLabel(
-                    ticker=LogMainTicker(base=10),
-                    formatter=ScientificFormatter(),
-                )
-
-            mirror = self.options.x_log_tick_mirror
-        else:
-            data_range = Range(
-                min=self.options.x_axis_linear_min,
-                max=self.options.x_axis_linear_max,
-            )
-            normalizer = LinearNormalizer()
-
-            main_ticks = None
-            if self.options.x_linear_maintick_step > 0:
-                main_ticks = TickMark(
-                    ticker=StepTicker(
-                        step=self.options.x_linear_maintick_step,
-                        offset=self.options.x_linear_maintick_offset,
-                    )
-                )
-
-            sub_ticks = None
-            if self.options.x_linear_subtick_step > 0:
-                sub_ticks = TickMark(
-                    ticker=StepTicker(
-                        step=self.options.x_linear_subtick_step,
-                        offset=self.options.x_linear_subtick_offset,
-                    )
-                )
-
-            tick_labels = None
-            if self.options.x_linear_numtick_step > 0:
-                tick_labels = TickLabel(
-                    ticker=StepTicker(
-                        step=self.options.x_linear_numtick_step,
-                        offset=self.options.x_linear_numtick_offset,
-                    ),
-                    formatter=BasicFormatter("{:.1f}"),
-                )
-
-            mirror = self.options.x_linear_tick_mirror
-
-        return Axis(
-            label=self.options.x_axis_label,
-            range=data_range,
-            normalizer=normalizer,
-            placement=self.options.x_axis_placement,
-            offset=self._px(self.options.x_axis_pos),
-            main_ticks=main_ticks,
-            sub_ticks=sub_ticks,
-            tick_labels=tick_labels,
-            mirror_main_ticks=mirror,
-            mirror_sub_ticks=mirror,
+        return GraphRoot(
+            document=self.svg,
+            svg_group=root_group,
+            plot_area_width=width,
+            plot_area_height=height,
         )
 
-    def _build_y_axis(self) -> Axis:
-        """Y軸を構築する"""
-        is_log = self.options.y_scale == "y_axis_log"
+    def _build_frame_renderer(self) -> FrameRenderer | None:
+        if not self.options.render_border:
+            return None
 
-        if is_log:
-            data_range = Range(
-                min=float(self.options.y_axis_log_min),
-                max=float(self.options.y_axis_log_max),
+        return FrameRenderer(
+            top=self.options.frame_top,
+            bottom=self.options.frame_bottom,
+            left=self.options.frame_left,
+            right=self.options.frame_right,
+            stroke_width=self._px(self.options.frame_stroke_width),
+        )
+
+    def _build_title_renderer(self) -> TitleRenderer | None:
+        if not self.options.render_title:
+            return None
+
+        if normalize_text(self.options.title_text) is None:
+            return None
+
+        try:
+            placement = TitlePlacement(self.options.title_placement)
+        except ValueError:
+            placement = TitlePlacement.TOP
+
+        return TitleRenderer(
+            font_family=self.options.font_family,
+            font_size=self._pt(self.options.title_font_size),
+            placement=placement,
+            pos_offset=self._px(self.options.title_pos),
+        )
+
+    def _build_plots_renderer(self) -> PlotsRenderer | None:
+        if not self.options.render_plot:
+            return None
+
+        if self.options.marker_shape == "none":
+            return None
+
+        marker = create_marker_generator(
+            shape=self.options.marker_shape,
+            size=self._px(self.options.marker_size),
+            stroke_width=self._px(self.options.marker_stroke_width),
+        )
+        return PlotsRenderer(marker=marker)
+
+    def _build_axis_renderer(self, axis: str) -> AxisRenderer | None:
+        if axis == "x":
+            if not self.options.render_x_axis:
+                return None
+
+            placement = self.options.x_axis_placement
+            pos_offset = self._px(self.options.x_axis_pos)
+            coord_mapper = (
+                BottomAxisCoordinateMapper(pos_offset=pos_offset)
+                if placement == "bottom"
+                else TopAxisCoordinateMapper(pos_offset=pos_offset)
             )
-            normalizer = LogNormalizer(base=10)
+            scale_mode = self.options.x_scale
 
-            main_ticks = None
-            if self.options.y_log_maintick_visible:
-                main_ticks = TickMark(ticker=LogMainTicker(base=10))
+            linear_maintick_step = self.options.x_linear_maintick_step
+            linear_maintick_offset = self.options.x_linear_maintick_offset
+            linear_subtick_step = self.options.x_linear_subtick_step
+            linear_subtick_offset = self.options.x_linear_subtick_offset
+            linear_numtick_step = self.options.x_linear_numtick_step
+            linear_numtick_offset = self.options.x_linear_numtick_offset
 
-            sub_ticks = None
-            if self.options.y_log_subtick_visible:
-                sub_ticks = TickMark(ticker=LogSubTicker(base=10))
+            log_maintick_visible = self.options.x_log_maintick_visible
+            log_subtick_visible = self.options.x_log_subtick_visible
+            log_numtick_visible = self.options.x_log_numtick_visible
 
-            tick_labels = None
-            if self.options.y_log_numtick_visible:
-                tick_labels = TickLabel(
-                    ticker=LogMainTicker(base=10),
+            axis_label_text = self.options.x_axis_label
+        else:
+            if not self.options.render_y_axis:
+                return None
+
+            placement = self.options.y_axis_placement
+            pos_offset = self._px(self.options.y_axis_pos)
+            coord_mapper = (
+                LeftAxisCoordinateMapper(pos_offset=pos_offset)
+                if placement == "left"
+                else RightAxisCoordinateMapper(pos_offset=pos_offset)
+            )
+            scale_mode = self.options.y_scale
+
+            linear_maintick_step = self.options.y_linear_maintick_step
+            linear_maintick_offset = self.options.y_linear_maintick_offset
+            linear_subtick_step = self.options.y_linear_subtick_step
+            linear_subtick_offset = self.options.y_linear_subtick_offset
+            linear_numtick_step = self.options.y_linear_numtick_step
+            linear_numtick_offset = self.options.y_linear_numtick_offset
+
+            log_maintick_visible = self.options.y_log_maintick_visible
+            log_subtick_visible = self.options.y_log_subtick_visible
+            log_numtick_visible = self.options.y_log_numtick_visible
+
+            axis_label_text = self.options.y_axis_label
+
+        line = AxisLineGenerator(stroke_width=self._px(self.options.frame_stroke_width))
+
+        main_tick_lines = None
+        sub_tick_lines = None
+        tick_labels = None
+
+        if scale_mode.endswith("_linear"):
+            if linear_maintick_step > 0:
+                main_tick_lines = TickLinesGenerator(
+                    ticker=StepTicker(
+                        step=linear_maintick_step,
+                        offset=linear_maintick_offset,
+                    ),
+                    length=self._px(self.options.maintick_length),
+                    stroke_width=self._px(self.options.tick_stroke_width),
+                )
+
+            if linear_subtick_step > 0:
+                sub_tick_lines = TickLinesGenerator(
+                    ticker=StepTicker(
+                        step=linear_subtick_step,
+                        offset=linear_subtick_offset,
+                    ),
+                    length=self._px(self.options.subtick_length),
+                    stroke_width=self._px(self.options.tick_stroke_width),
+                )
+
+            if linear_numtick_step > 0:
+                tick_labels = TickLabelsGenerator(
+                    ticker=StepTicker(
+                        step=linear_numtick_step,
+                        offset=linear_numtick_offset,
+                    ),
+                    font_family=self.options.font_family,
+                    font_size=self._pt(self.options.tick_label_font_size),
+                    pos_offset=self._pt(self.options.tick_label_font_size) * 0.6,
+                    formatter=BasicFormatter(),
+                )
+        else:  # log scale
+            if log_maintick_visible:
+                main_tick_lines = TickLinesGenerator(
+                    ticker=LogMainTicker(),
+                    length=self._px(self.options.maintick_length),
+                    stroke_width=self._px(self.options.tick_stroke_width),
+                )
+
+            if log_subtick_visible:
+                sub_tick_lines = TickLinesGenerator(
+                    ticker=LogSubTicker(),
+                    length=self._px(self.options.subtick_length),
+                    stroke_width=self._px(self.options.tick_stroke_width),
+                )
+
+            if log_numtick_visible:
+                tick_labels = TickLabelsGenerator(
+                    ticker=LogMainTicker(),
+                    font_family=self.options.font_family,
+                    font_size=self._pt(self.options.tick_label_font_size),
+                    pos_offset=self._pt(self.options.tick_label_font_size) * 0.6,
                     formatter=ScientificFormatter(),
                 )
 
-            mirror = self.options.y_log_tick_mirror
-        else:
-            data_range = Range(
-                min=self.options.y_axis_linear_min,
-                max=self.options.y_axis_linear_max,
+        axis_label = None
+        if normalize_text(axis_label_text) is not None:
+            axis_label = LabelGenerator(
+                font_family=self.options.font_family,
+                font_size=self._pt(self.options.axis_label_font_size),
             )
-            normalizer = LinearNormalizer()
 
-            main_ticks = None
-            if self.options.y_linear_maintick_step > 0:
-                main_ticks = TickMark(
-                    ticker=StepTicker(
-                        step=self.options.y_linear_maintick_step,
-                        offset=self.options.y_linear_maintick_offset,
-                    )
-                )
-
-            sub_ticks = None
-            if self.options.y_linear_subtick_step > 0:
-                sub_ticks = TickMark(
-                    ticker=StepTicker(
-                        step=self.options.y_linear_subtick_step,
-                        offset=self.options.y_linear_subtick_offset,
-                    )
-                )
-
-            tick_labels = None
-            if self.options.y_linear_numtick_step > 0:
-                tick_labels = TickLabel(
-                    ticker=StepTicker(
-                        step=self.options.y_linear_numtick_step,
-                        offset=self.options.y_linear_numtick_offset,
-                    ),
-                    formatter=BasicFormatter("{:.1f}"),
-                )
-
-            mirror = self.options.y_linear_tick_mirror
-
-        return Axis(
-            label=self.options.y_axis_label,
-            range=data_range,
-            normalizer=normalizer,
-            placement=self.options.y_axis_placement,
-            offset=self._px(self.options.y_axis_pos),
-            main_ticks=main_ticks,
-            sub_ticks=sub_ticks,
+        return AxisRenderer(
+            coord_mapper=coord_mapper,
+            line=line,
+            main_tick_lines=main_tick_lines,
+            sub_tick_lines=sub_tick_lines,
             tick_labels=tick_labels,
-            mirror_main_ticks=mirror,
-            mirror_sub_ticks=mirror,
+            axis_label=axis_label,
         )
 
     def _px(self, value: float) -> float:
@@ -411,77 +442,66 @@ class RenderGraphExtension(inkex.EffectExtension):
         """pt値をドキュメント単位に変換する"""
         return self.svg.viewport_to_unit(f"{value}pt")
 
-    def _build_style(self) -> GraphStyle:
-        """スタイルを構築する"""
-        font_family = self.options.font_family
+    def _build_axis(
+        self,
+        scale_mode: str,
+        linear_mode_key: str,
+        linear_min: float,
+        linear_max: float,
+        log_min: str,
+        log_max: str,
+        label: str,
+    ) -> Axis:
+        if scale_mode == linear_mode_key:
+            min_val = linear_min
+            max_val = linear_max
+            scale = LinearScale()
+        else:
+            min_val = float(log_min)
+            max_val = float(log_max)
+            scale = LogScale()
 
-        frame_stroke = StrokeStyle(
-            color="black",
-            width=self._px(self.options.frame_stroke_width),
+        return Axis(
+            label=normalize_text(label),
+            interval=Interval(min=min_val, max=max_val),
+            _scale=scale,
         )
 
-        tick_stroke = StrokeStyle(
-            color="black",
-            width=self._px(self.options.tick_stroke_width),
+    def _build_graph(self) -> Graph:
+        x_axis = self._build_axis(
+            scale_mode=self.options.x_scale,
+            linear_mode_key="x_axis_linear",
+            linear_min=self.options.x_axis_linear_min,
+            linear_max=self.options.x_axis_linear_max,
+            log_min=self.options.x_axis_log_min,
+            log_max=self.options.x_axis_log_max,
+            label=self.options.x_axis_label,
         )
 
-        tick_label_font_size = self._pt(self.options.tick_label_font_size)
-        axis_label_font_size = self._pt(self.options.axis_label_font_size)
-
-        x_axis_style = AxisStyle(
-            line=frame_stroke,
-            main_tick=TickStyle(
-                stroke=tick_stroke, length=self._px(self.options.maintick_length)
-            ),
-            sub_tick=TickStyle(
-                stroke=tick_stroke, length=self._px(self.options.subtick_length)
-            ),
-            tick_label=TextStyle(
-                font_family=font_family,
-                font_size=tick_label_font_size,
-            ),
-            axis_label=TextStyle(
-                font_family=font_family,
-                font_size=axis_label_font_size,
-            ),
-            tick_label_offset=tick_label_font_size * 0.4,
-            axis_label_offset=tick_label_font_size * 1.5 + axis_label_font_size,
+        y_axis = self._build_axis(
+            scale_mode=self.options.y_scale,
+            linear_mode_key="y_axis_linear",
+            linear_min=self.options.y_axis_linear_min,
+            linear_max=self.options.y_axis_linear_max,
+            log_min=self.options.y_axis_log_min,
+            log_max=self.options.y_axis_log_max,
+            label=self.options.y_axis_label,
         )
 
-        y_axis_style = AxisStyle(
-            line=frame_stroke,
-            main_tick=TickStyle(
-                stroke=tick_stroke, length=self._px(self.options.maintick_length)
-            ),
-            sub_tick=TickStyle(
-                stroke=tick_stroke, length=self._px(self.options.subtick_length)
-            ),
-            tick_label=TextStyle(
-                font_family=font_family,
-                font_size=tick_label_font_size,
-            ),
-            axis_label=TextStyle(
-                font_family=font_family,
-                font_size=axis_label_font_size,
-            ),
-            # Y軸: 目盛り数字の幅があるので大きめのオフセット
-            tick_label_offset=tick_label_font_size * 0.5,
-            axis_label_offset=tick_label_font_size * 2 + axis_label_font_size,
+        x_column = self.options.x_column - 1
+        y_column = self.options.y_column - 1
+        x_data, y_data = parse_data(
+            self.options.data_text.strip(), x_column, y_column, self.options.data_delim
         )
 
-        return GraphStyle(
-            frame=frame_stroke,
-            x_axis=x_axis_style,
-            y_axis=y_axis_style,
-            marker=MarkerStyle(
-                fill="white",
-                stroke="black",
-                stroke_width=self._px(self.options.marker_stroke_width),
-                size=self._px(self.options.marker_size),
-            ),
-            title=TextStyle(
-                font_family=font_family,
-                font_size=self._pt(self.options.title_font_size),
+        return Graph(
+            title=normalize_text(self.options.title_text),
+            x_axis=x_axis,
+            y_axis=y_axis,
+            series=Series(
+                name=None,
+                xs=x_data,
+                ys=y_data,
             ),
         )
 
