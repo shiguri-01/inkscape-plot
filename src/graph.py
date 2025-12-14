@@ -46,7 +46,7 @@ class LogScale:
         self.base = base
 
     def normalize(self, value: float, interval: Interval) -> float:
-        if value <= 0 or interval.min <= 0:
+        if value <= 0 or interval.min <= 0 or interval.max <= 0:
             raise ValueError("LogScale requires positive values.")
         log_min = math.log(interval.min, self.base)
         log_max = math.log(interval.max, self.base)
