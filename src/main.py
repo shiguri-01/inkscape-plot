@@ -36,7 +36,6 @@ from renderer.renderer import (
 )
 
 # TODO: 軸のmirror対応
-# TODO: 軸の向きの逆転
 
 
 def parse_data(
@@ -202,7 +201,10 @@ class RenderGraphExtension(inkex.EffectExtension):
         if root is None:
             return
 
-        graph = self._build_graph()
+        graph, x_inverted, y_inverted = self._build_graph()
+        
+        root.x_inverted = x_inverted
+        root.y_inverted = y_inverted
 
         renderer_parts: list[GraphPartRenderer] = []
 
@@ -451,7 +453,12 @@ class RenderGraphExtension(inkex.EffectExtension):
         log_min: str,
         log_max: str,
         label: str,
-    ) -> Axis:
+    ) -> tuple[Axis, bool]:
+        """軸を構築し、反転フラグを返す
+        
+        Returns:
+            tuple[Axis, bool]: (軸, 反転フラグ)
+        """
         if scale_mode == linear_mode_key:
             min_val = linear_min
             max_val = linear_max
@@ -461,14 +468,25 @@ class RenderGraphExtension(inkex.EffectExtension):
             max_val = float(log_max)
             scale = LogScale()
 
-        return Axis(
+        inverted = min_val > max_val
+        if inverted:
+            min_val, max_val = max_val, min_val
+
+        axis = Axis(
             label=normalize_text(label),
             interval=Interval(min=min_val, max=max_val),
             _scale=scale,
         )
+        
+        return axis, inverted
 
-    def _build_graph(self) -> Graph:
-        x_axis = self._build_axis(
+    def _build_graph(self) -> tuple[Graph, bool, bool]:
+        """グラフを構築し、軸の反転フラグを返す
+        
+        Returns:
+            tuple[Graph, bool, bool]: (グラフ, x軸反転, y軸反転)
+        """
+        x_axis, x_inverted = self._build_axis(
             scale_mode=self.options.x_scale,
             linear_mode_key="x_axis_linear",
             linear_min=self.options.x_axis_linear_min,
@@ -478,7 +496,7 @@ class RenderGraphExtension(inkex.EffectExtension):
             label=self.options.x_axis_label,
         )
 
-        y_axis = self._build_axis(
+        y_axis, y_inverted = self._build_axis(
             scale_mode=self.options.y_scale,
             linear_mode_key="y_axis_linear",
             linear_min=self.options.y_axis_linear_min,
@@ -494,7 +512,7 @@ class RenderGraphExtension(inkex.EffectExtension):
             self.options.data_text.strip(), x_column, y_column, self.options.data_delim
         )
 
-        return Graph(
+        graph = Graph(
             title=normalize_text(self.options.title_text),
             x_axis=x_axis,
             y_axis=y_axis,
@@ -504,6 +522,8 @@ class RenderGraphExtension(inkex.EffectExtension):
                 ys=y_data,
             ),
         )
+        
+        return graph, x_inverted, y_inverted
 
 
 if __name__ == "__main__":

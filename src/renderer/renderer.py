@@ -27,11 +27,18 @@ class GraphRoot:
     プロット領域：軸ラベルやタイトルを除いたデータの点が描画される領域
     """
 
+    x_inverted: bool = False
+    y_inverted: bool = False
+
     def map_x(self, normalized_x: float) -> float:
+        if self.x_inverted:
+            normalized_x = 1.0 - normalized_x
         return normalized_x * self.plot_area_width
 
     def map_y(self, normalized_y: float) -> float:
-        return (1.0 - normalized_y) * self.plot_area_height
+        if not self.y_inverted:
+            normalized_y = 1.0 - normalized_y
+        return normalized_y * self.plot_area_height
 
 
 class GraphPartRenderer(Protocol):
