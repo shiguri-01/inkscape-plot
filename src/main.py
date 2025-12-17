@@ -36,8 +36,6 @@ from renderer.renderer import (
     render_graph_parts,
 )
 
-# TODO: 軸のmirror対応
-
 
 def parse_data(
     data_text: str, x_column: int, y_column: int, delimiter: str
@@ -222,9 +220,17 @@ class RenderGraphExtension(inkex.EffectExtension):
         if x_axis is not None:
             renderer_parts.append(x_axis)
 
+        x_axis_mirror = self._build_axis_renderer("x", mirror=True)
+        if x_axis_mirror is not None:
+            renderer_parts.append(x_axis_mirror)
+
         y_axis = self._build_axis_renderer("y")
         if y_axis is not None:
             renderer_parts.append(y_axis)
+
+        y_axis_mirror = self._build_axis_renderer("y", mirror=True)
+        if y_axis_mirror is not None:
+            renderer_parts.append(y_axis_mirror)
 
         plot = self._build_plots_renderer()
         if plot is not None:
@@ -331,18 +337,15 @@ class RenderGraphExtension(inkex.EffectExtension):
         )
         return PlotsRenderer(marker=marker)
 
-    def _build_axis_renderer(self, axis: str) -> AxisRenderer | None:
+    def _build_axis_renderer(
+        self, axis: str, *, mirror: bool = False
+    ) -> AxisRenderer | None:
         if axis == "x":
             if not self.options.render_x_axis:
                 return None
 
             placement = self.options.x_axis_placement
             pos_offset = self._px(self.options.x_axis_pos)
-            coord_mapper = (
-                BottomAxisCoordinateMapper(pos_offset=pos_offset)
-                if placement == "bottom"
-                else TopAxisCoordinateMapper(pos_offset=pos_offset)
-            )
             scale_mode = self.options.x_scale
 
             linear_maintick_step = self.options.x_linear_maintick_step
@@ -356,6 +359,12 @@ class RenderGraphExtension(inkex.EffectExtension):
             log_subtick_visible = self.options.x_log_subtick_visible
             log_numtick_visible = self.options.x_log_numtick_visible
 
+            mirror_enabled = (
+                self.options.x_linear_tick_mirror
+                if scale_mode.endswith("_linear")
+                else self.options.x_log_tick_mirror
+            )
+
             axis_label_text = self.options.x_axis_label
         else:
             if not self.options.render_y_axis:
@@ -363,11 +372,6 @@ class RenderGraphExtension(inkex.EffectExtension):
 
             placement = self.options.y_axis_placement
             pos_offset = self._px(self.options.y_axis_pos)
-            coord_mapper = (
-                LeftAxisCoordinateMapper(pos_offset=pos_offset)
-                if placement == "left"
-                else RightAxisCoordinateMapper(pos_offset=pos_offset)
-            )
             scale_mode = self.options.y_scale
 
             linear_maintick_step = self.options.y_linear_maintick_step
@@ -381,7 +385,36 @@ class RenderGraphExtension(inkex.EffectExtension):
             log_subtick_visible = self.options.y_log_subtick_visible
             log_numtick_visible = self.options.y_log_numtick_visible
 
+            mirror_enabled = (
+                self.options.y_linear_tick_mirror
+                if scale_mode.endswith("_linear")
+                else self.options.y_log_tick_mirror
+            )
+
             axis_label_text = self.options.y_axis_label
+
+        if mirror:
+            if not mirror_enabled:
+                return None
+
+            # 反対側に描画する（offsetは同じ）
+            if axis == "x":
+                placement = "top" if placement == "bottom" else "bottom"
+            else:
+                placement = "right" if placement == "left" else "left"
+
+        if axis == "x":
+            coord_mapper = (
+                BottomAxisCoordinateMapper(pos_offset=pos_offset)
+                if placement == "bottom"
+                else TopAxisCoordinateMapper(pos_offset=pos_offset)
+            )
+        else:
+            coord_mapper = (
+                LeftAxisCoordinateMapper(pos_offset=pos_offset)
+                if placement == "left"
+                else RightAxisCoordinateMapper(pos_offset=pos_offset)
+            )
 
         line = AxisLineGenerator(stroke_width=self._px(self.options.frame_stroke_width))
 
@@ -446,11 +479,15 @@ class RenderGraphExtension(inkex.EffectExtension):
                 )
 
         axis_label = None
-        if normalize_text(axis_label_text) is not None:
+        if not mirror and normalize_text(axis_label_text) is not None:
             axis_label = LabelGenerator(
                 font_family=self.options.font_family,
                 font_size=self._pt(self.options.axis_label_font_size),
             )
+
+        if mirror:
+            # mirror側はラベル類は描かない
+            tick_labels = None
 
         return AxisRenderer(
             coord_mapper=coord_mapper,
