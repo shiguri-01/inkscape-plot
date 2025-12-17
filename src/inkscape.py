@@ -13,7 +13,7 @@ class TextStyle:
     def __str__(self) -> str:
         parts: list[str] = [
             f"font-family:{self.font_family}",
-            f"font-size:{self.font_size}pt",
+            f"font-size:{self.font_size}",
             f"fill:{self.color}",
             f"text-anchor:{self.anchor}",
         ]
@@ -43,7 +43,7 @@ class StrokeStyle:
     def __str__(self) -> str:
         parts: list[str] = [
             f"stroke:{self.color}",
-            f"stroke-width:{self.width}pt",
+            f"stroke-width:{self.width}",
         ]
         return ";".join(parts)
 
