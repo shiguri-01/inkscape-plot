@@ -204,7 +204,7 @@ class RenderGraphExtension(inkex.EffectExtension):
             return
 
         graph, x_inverted, y_inverted = self._build_graph()
-        
+
         root.x_inverted = x_inverted
         root.y_inverted = y_inverted
 
@@ -250,12 +250,12 @@ class RenderGraphExtension(inkex.EffectExtension):
         layer = self.svg.get_current_layer()
         title = normalize_text(self.options.title_text)
         root_group = None
-        
+
         target_label = None
         if title:
             # Sanitize title and add prefix for safe/distinct labeling
             # Allow word chars (including Japanese), spaces, and hyphens. Replace others with underscore.
-            sanitized_title = re.sub(r'[^\w\s\-]', '_', title)
+            sanitized_title = re.sub(r"[^\w\s\-]", "_", title)
             target_label = "graph_" + sanitized_title
 
         if self.options.group_by_title and target_label is not None:
@@ -263,7 +263,7 @@ class RenderGraphExtension(inkex.EffectExtension):
             found_groups = layer.xpath(f"./svg:g[@inkscape:label='{target_label}']")
             if found_groups:
                 root_group = found_groups[0]
-        
+
         if root_group is None:
             # Create new group
             x = page_bbox.center_x - width / 2
@@ -271,11 +271,11 @@ class RenderGraphExtension(inkex.EffectExtension):
 
             root_group = inkex.Group()
             root_group.set("id", self.svg.get_unique_id("graph"))
-            
+
             # Only set label if grouping is enabled (marking it as a target for future plots)
             if self.options.group_by_title and target_label is not None:
                 root_group.label = target_label
-            
+
             root_group.transform.add_translate(x, y)
             layer.add(root_group)
 
@@ -480,7 +480,7 @@ class RenderGraphExtension(inkex.EffectExtension):
         label: str,
     ) -> tuple[Axis, bool]:
         """軸を構築し、反転フラグを返す
-        
+
         Returns:
             tuple[Axis, bool]: (軸, 反転フラグ)
         """
@@ -502,12 +502,12 @@ class RenderGraphExtension(inkex.EffectExtension):
             interval=Interval(min=min_val, max=max_val),
             _scale=scale,
         )
-        
+
         return axis, inverted
 
     def _build_graph(self) -> tuple[Graph, bool, bool]:
         """グラフを構築し、軸の反転フラグを返す
-        
+
         Returns:
             tuple[Graph, bool, bool]: (グラフ, x軸反転, y軸反転)
         """
@@ -547,7 +547,7 @@ class RenderGraphExtension(inkex.EffectExtension):
                 ys=y_data,
             ),
         )
-        
+
         return graph, x_inverted, y_inverted
 
 
