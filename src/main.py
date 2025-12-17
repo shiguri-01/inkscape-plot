@@ -174,6 +174,7 @@ class RenderGraphExtension(inkex.EffectExtension):
         pars.add_argument("--frame_right", type=inkex.Boolean, default=True)
 
         # Details
+        pars.add_argument("--group_by_title", type=inkex.Boolean, default=False)
         pars.add_argument("--plot_width", type=int, default=400)
         pars.add_argument("--plot_height", type=int, default=400)
         pars.add_argument("--font_family", type=str, default="sans-serif")
@@ -244,15 +245,37 @@ class RenderGraphExtension(inkex.EffectExtension):
 
         width = self._px(float(self.options.plot_width))
         height = self._px(float(self.options.plot_height))
-        x = page_bbox.center_x - width / 2
-        y = page_bbox.center_y - height / 2
 
         layer = self.svg.get_current_layer()
+        title = normalize_text(self.options.title_text)
+        root_group = None
+        
+        target_label = None
+        if title:
+            # Sanitize title and add prefix for safe/distinct labeling
+            sanitized_title = title.replace("'", "_").replace('"', "_")
+            target_label = "graph_" + sanitized_title
 
-        root_group = inkex.Group()
-        root_group.set("id", self.svg.get_unique_id("graph"))
-        root_group.transform.add_translate(x, y)
-        layer.add(root_group)
+        if self.options.group_by_title and target_label is not None:
+            # Search for existing group with matching label in current layer
+            found_groups = layer.xpath(f"./svg:g[@inkscape:label='{target_label}']")
+            if found_groups:
+                root_group = found_groups[0]
+        
+        if root_group is None:
+            # Create new group
+            x = page_bbox.center_x - width / 2
+            y = page_bbox.center_y - height / 2
+
+            root_group = inkex.Group()
+            root_group.set("id", self.svg.get_unique_id("graph"))
+            
+            # Only set label if grouping is enabled (marking it as a target for future plots)
+            if self.options.group_by_title and target_label is not None:
+                root_group.label = target_label
+            
+            root_group.transform.add_translate(x, y)
+            layer.add(root_group)
 
         return GraphRoot(
             document=self.svg,

@@ -266,19 +266,22 @@
         <spacer />
         <param name="plot_height" type="int" gui-text="高さ(px)：" min="1" max="99999">400</param>
       </hbox>
-      <spacer />
-
-      <label appearance="header">フォント</label>
-      <param name="font_family" type="string" gui-text="フォントファミリー：" indent="1">sans-serif</param>
-      <hbox indent="1">
-        <param name="title_font_size" type="int" gui-text="タイトル(pt)：" min="1" max="999">16</param>
-        <spacer />
-        <param name="axis_label_font_size" type="int" gui-text="軸ラベル(pt)：" min="1" max="999">16</param>
-        <spacer />
-        <param name="tick_label_font_size" type="int" gui-text="目盛り数字(pt)：" min="1" max="999">14</param>
-      </hbox>
-      <spacer />
-
+              <spacer />
+      
+            <label appearance="header">フォント</label>
+            <param name="font_family" type="string" gui-text="フォントファミリー：" indent="1">sans-serif</param>
+            <hbox indent="1">
+              <param name="title_font_size" type="int" gui-text="タイトル(pt)：" min="1" max="999">16</param>
+              <spacer />
+              <param name="axis_label_font_size" type="int" gui-text="軸ラベル(pt)：" min="1" max="999">16</param>
+              <spacer />
+              <param name="tick_label_font_size" type="int" gui-text="目盛り数字(pt)：" min="1" max="999">14</param>
+            </hbox>
+            <spacer />
+            
+            <label appearance="header">出力設定</label>
+            <param name="group_by_title" type="bool" gui-text="タイトルでグループ化">false</param>
+            <spacer />
       <label appearance="header">線・目盛りスタイル</label>
       <vbox indent="1">
         <hbox indent="1">
