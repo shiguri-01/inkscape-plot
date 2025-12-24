@@ -22,10 +22,10 @@
       <param name="x_scale" type="notebook">
         <page name="x_axis_linear" gui-text="線形">
           <hbox indent="1">
-            <param name="x_axis_linear_min" type="float" gui-text="最小値：" min="-999999999999999"
+            <param name="x_axis_linear_min" type="float" precision="6" gui-text="最小値：" min="-999999999999999"
               max="999999999999999">0</param>
             <spacer />
-            <param name="x_axis_linear_max" type="float" gui-text="最大値：" min="-999999999999999"
+            <param name="x_axis_linear_max" type="float" precision="6" gui-text="最大値：" min="-999999999999999"
               max="999999999999999">100</param>
           </hbox>
           <spacer />
@@ -34,20 +34,20 @@
           <vbox indent="1">
             <label appearance="header">メイン目盛り</label>
             <hbox indent="1">
-              <param name="x_linear_maintick_step" type="float" gui-text="ステップ：" min="0"
+              <param name="x_linear_maintick_step" type="float" precision="6" gui-text="ステップ：" min="0"
                 max="999999999999999">10</param>
               <spacer />
-              <param name="x_linear_maintick_offset" type="float" gui-text="オフセット："
+              <param name="x_linear_maintick_offset" type="float" precision="6" gui-text="オフセット："
                 min="-999999999"
                 max="999999999">0</param>
             </hbox>
             <spacer size="4" />
             <label appearance="header">サブ目盛り</label>
             <hbox indent="1">
-              <param name="x_linear_subtick_step" type="float" gui-text="ステップ：" min="0"
+              <param name="x_linear_subtick_step" type="float" precision="6" gui-text="ステップ：" min="0"
                 max="999999999999999">10</param>
               <spacer />
-              <param name="x_linear_subtick_offset" type="float" gui-text="オフセット："
+              <param name="x_linear_subtick_offset" type="float" precision="6" gui-text="オフセット："
                 min="-999999999999999"
                 max="999999999999999">0</param>
             </hbox>
@@ -58,11 +58,11 @@
 
           <label appearance="header">目盛り数字</label>
           <hbox indent="1">
-            <param name="x_linear_numtick_step" type="float" gui-text="ステップ："
+            <param name="x_linear_numtick_step" type="float" precision="6" gui-text="ステップ："
               min="0" max="999999999999999">
               10</param>
             <spacer />
-            <param name="x_linear_numtick_offset" type="float" gui-text="オフセット："
+            <param name="x_linear_numtick_offset" type="float" precision="6" gui-text="オフセット："
               min="-999999999999999" max="999999999999999">
               0</param>
           </hbox>
@@ -115,10 +115,10 @@
       <param name="y_scale" type="notebook">
         <page name="y_axis_linear" gui-text="線形">
           <hbox indent="1">
-            <param name="y_axis_linear_min" type="float" gui-text="最小値：" min="-999999999999999"
+            <param name="y_axis_linear_min" type="float" precision="6" gui-text="最小値：" min="-999999999999999"
               max="999999999999999">0</param>
             <spacer />
-            <param name="y_axis_linear_max" type="float" gui-text="最大値：" min="-999999999999999"
+            <param name="y_axis_linear_max" type="float" precision="6" gui-text="最大値：" min="-999999999999999"
               max="999999999999999">100</param>
           </hbox>
           <spacer />
@@ -127,20 +127,20 @@
           <vbox indent="1">
             <label appearance="header">メイン目盛り</label>
             <hbox indent="1">
-              <param name="y_linear_maintick_step" type="float" gui-text="ステップ：" min="0"
+              <param name="y_linear_maintick_step" type="float" precision="6" gui-text="ステップ：" min="0"
                 max="999999999999999">10</param>
               <spacer />
-              <param name="y_linear_maintick_offset" type="float" gui-text="オフセット："
+              <param name="y_linear_maintick_offset" type="float" precision="6" gui-text="オフセット："
                 min="-999999999"
                 max="999999999">0</param>
             </hbox>
             <spacer size="4" />
             <label appearance="header">サブ目盛り</label>
             <hbox indent="1">
-              <param name="y_linear_subtick_step" type="float" gui-text="ステップ：" min="0"
+              <param name="y_linear_subtick_step" type="float" precision="6" gui-text="ステップ：" min="0"
                 max="999999999999999">10</param>
               <spacer />
-              <param name="y_linear_subtick_offset" type="float" gui-text="オフセット："
+              <param name="y_linear_subtick_offset" type="float" precision="6" gui-text="オフセット："
                 min="-999999999999999"
                 max="999999999999999">0</param>
             </hbox>
@@ -151,11 +151,11 @@
 
           <label appearance="header">目盛り数字</label>
           <hbox indent="1">
-            <param name="y_linear_numtick_step" type="float" gui-text="ステップ："
+            <param name="y_linear_numtick_step" type="float" precision="6" gui-text="ステップ："
               min="0" max="999999999999999">
               10</param>
             <spacer />
-            <param name="y_linear_numtick_offset" type="float" gui-text="オフセット："
+            <param name="y_linear_numtick_offset" type="float" precision="6" gui-text="オフセット："
               min="-999999999999999" max="999999999999999">
               0</param>
           </hbox>
