@@ -7,7 +7,7 @@ import numpy as np
 
 @dataclass(frozen=True)
 class Interval:
-    """数直線上の閉区間"""
+    """A closed interval on the number line."""
 
     min: float
     max: float
@@ -25,13 +25,13 @@ class Interval:
 
 
 class Scale(Protocol):
-    """値を0.0〜1.0の範囲に正規化する"""
+    """Normalizes values to the range 0.0-1.0."""
 
     def normalize(self, value: float, interval: Interval) -> float: ...
 
 
 class LinearScale:
-    """線形スケール"""
+    """Linear scale."""
 
     def normalize(self, value: float, interval: Interval) -> float:
         if interval.length == 0:
@@ -40,7 +40,7 @@ class LinearScale:
 
 
 class LogScale:
-    """対数スケール"""
+    """Logarithmic scale."""
 
     def __init__(self, base: float = 10.0):
         self.base = base
@@ -58,7 +58,7 @@ class LogScale:
 
 @dataclass(frozen=True)
 class Series:
-    """データ系列"""
+    """Data series."""
 
     name: str | None
 
@@ -72,7 +72,7 @@ class Series:
 
 @dataclass
 class Axis:
-    """グラフの軸"""
+    """Axis of a graph."""
 
     label: str | None
     interval: Interval
@@ -84,7 +84,7 @@ class Axis:
 
 @dataclass(frozen=True)
 class Graph:
-    """グラフ"""
+    """A graph."""
 
     title: str | None
     x_axis: Axis
@@ -93,20 +93,20 @@ class Graph:
 
 
 class Ticker(Protocol):
-    """目盛りの値を計算する"""
+    """Calculates tick mark values."""
 
     def get_ticks(self, interval: Interval) -> np.ndarray: ...
 
 
 @dataclass(frozen=True)
 class StepTicker:
-    """一定間隔の目盛り"""
+    """Regular interval ticks."""
 
     step: float
     offset: float = 0.0
 
     def get_ticks(self, interval: Interval) -> np.ndarray:
-        # 最初の値を計算
+        # Calculate the first value
         start_n = np.ceil((interval.min - self.offset) / self.step)
         start_value = self.offset + start_n * self.step
 
@@ -115,7 +115,7 @@ class StepTicker:
 
 
 class LogMainTicker:
-    """常用対数軸のメイン目盛り (1, 10, 100, ...)"""
+    """Main ticks for common logarithmic axis (1, 10, 100, ...)."""
 
     def get_ticks(self, interval: Interval) -> np.ndarray:
         if interval.min <= 0:
@@ -132,7 +132,7 @@ class LogMainTicker:
 
 
 class LogSubTicker:
-    """常用対数軸のサブ目盛り (2, 3, ..., 9, 20, 30, ...)"""
+    """Sub ticks for common logarithmic axis (2, 3, ..., 9, 20, 30, ...)."""
 
     def get_ticks(self, interval: Interval) -> np.ndarray:
         if interval.min <= 0:
@@ -149,7 +149,7 @@ class LogSubTicker:
 
         coeffs = np.array([2, 3, 4, 5, 6, 7, 8, 9], dtype=float)
 
-        # 全ての組み合わせの(bases × coeffs) を計算
+        # Calculate all combinations of (bases × coeffs)
         ticks = np.outer(bases, coeffs).flatten()
         ticks = ticks[(ticks >= interval.min) & (ticks <= interval.max)]
         return np.sort(ticks)

@@ -1,7 +1,7 @@
 [project]
 name = "inkscape-plot"
 version = "0.1.0"
-description = "Add your description here"
+description = "An Inkscape extension for drawing graphs and plots"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = []

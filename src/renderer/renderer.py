@@ -10,21 +10,21 @@ from inkscape import Line, StrokeStyle, TextElement, TextStyle
 
 @dataclass
 class GraphRoot:
-    """グラフのルート要素"""
+    """Root element of graph"""
 
-    document: inkex.SvgDocumentElement  # 主にget_unique_id()用
+    document: inkex.SvgDocumentElement  # Mainly for get_unique_id()
     svg_group: inkex.Group
 
     plot_area_width: float
-    """プロット領域の幅(px)
+    """Width of plot area (px)
 
-    プロット領域：軸ラベルやタイトルを除いたデータの点が描画される領域
+    Plot area: the area where data points are drawn, excluding axis labels and title
     """
 
     plot_area_height: float
-    """プロット領域の高さ(px)
+    """Height of plot area (px)
 
-    プロット領域：軸ラベルやタイトルを除いたデータの点が描画される領域
+    Plot area: the area where data points are drawn, excluding axis labels and title
     """
 
     x_inverted: bool = False
@@ -72,7 +72,7 @@ class FrameRenderer(GraphPartRenderer):
 
         parts: list[inkex.BaseElement] = []
 
-        # 枠線の太さを考慮した長さで線を引く
+        # Draw lines with length considering frame line thickness
         if self.top:
             parts.append(
                 Line(

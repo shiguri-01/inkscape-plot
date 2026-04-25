@@ -24,7 +24,7 @@ class BasicFormatter:
 
 
 class ScientificFormatter:
-    """指数表記フォーマッター"""
+    """Scientific notation formatter."""
 
     def __init__(self, precision: int = 0):
         self.precision = precision
@@ -56,34 +56,34 @@ class AxisCoordinateMapper(ABC):
 
     @abstractmethod
     def _get_parallel_pos(self, root: GraphRoot, norm_val: float) -> float:
-        """軸に沿った座標を返す"""
+        """Return coordinate along the axis."""
         pass
 
     @abstractmethod
     def _perpendicular_pos(self, root: GraphRoot) -> float:
-        """軸の向きと直交する方向の座標"""
+        """Coordinate perpendicular to the axis direction."""
         pass
 
     @abstractmethod
     def _perpendicular_offset(self, base: float, offset: float) -> float:
-        """垂直方向にoffsetだけ外側にずらした座標を返す"""
+        """Return coordinate offset outward in perpendicular direction."""
         pass
 
     @abstractmethod
     def _combine_coords(
         self, parallel: float, perpendicular: float
     ) -> tuple[float, float]:
-        """parallel, perpendicularを(x, y)に並び替える"""
+        """Rearrange parallel and perpendicular into (x, y)."""
         pass
 
     @abstractmethod
     def _tick_label_anchor(self) -> str:
-        """tick label用のtext-anchorを返す (start|middle|end)"""
+        """Return text-anchor for tick label (start|middle|end)."""
         pass
 
     @abstractmethod
     def _tick_label_dy(self) -> str:
-        """tick label用のbaseline補正(dy)を返す"""
+        """Return baseline correction (dy) for tick label."""
         pass
 
 
@@ -110,8 +110,8 @@ class TopAxisCoordinateMapper(AxisCoordinateMapper):
         return "middle"
 
     def _tick_label_dy(self) -> str:
-        # Top軸はラベルが上側に配置されるため、baseline基準のままだと
-        # 見た目が他より離れて見えやすい。少し下へ寄せて軸に近づける。
+        # For top axis, labels are positioned above. If baseline remains unchanged,
+        # it may appear farther apart than others. Adjust slightly downward to bring closer to axis.
         return "0.0em"
 
 
@@ -138,8 +138,8 @@ class BottomAxisCoordinateMapper(AxisCoordinateMapper):
         return "middle"
 
     def _tick_label_dy(self) -> str:
-        # pos_offset を「軸線から文字の外形(上端)までの距離」として扱うため、
-        # baselineを下にずらして外形位置が意図に近づくよう補正する。
+        # Treat pos_offset as "distance from axis line to character outline (top)",
+        # adjust baseline downward to bring outline position closer to intent.
         return "0.8em"
 
 
@@ -166,7 +166,7 @@ class LeftAxisCoordinateMapper(AxisCoordinateMapper):
         return "end"
 
     def _tick_label_dy(self) -> str:
-        # y座標はbaseline基準なので、tickの位置と文字の見た目中心が揃うように下へ補正。
+        # Y-coordinate is baseline-based, so adjust downward to align tick position with visual center of text.
         return "0.35em"
 
 
@@ -193,7 +193,7 @@ class RightAxisCoordinateMapper(AxisCoordinateMapper):
         return "start"
 
     def _tick_label_dy(self) -> str:
-        # y座標はbaseline基準なので、tickの位置と文字の見た目中心が揃うように下へ補正。
+        # Y-coordinate is baseline-based, so adjust downward to align tick position with visual center of text.
         return "0.35em"
 
 
@@ -203,10 +203,10 @@ def _get_tick_positions(
     coord_mapper: AxisCoordinateMapper,
     ticker: Ticker,
 ) -> list[tuple[float, float]]:
-    """軸方向の目盛り位置を取得する
+    """Get tick positions along the axis direction.
 
     Returns:
-        list[tuple[float, float]]: (値, 位置)のリスト
+        list[tuple[float, float]]: list of (value, position)
     """
     axis = coord_mapper._get_axis(graph)
 
@@ -336,7 +336,7 @@ class LabelGenerator(AxisPartGenerator):
         label.set("id", root.document.get_unique_id("axislabel"))
         label.text = axis.label
 
-        parallel = coord_mapper._get_parallel_pos(root, 0.5)  # 軸方向の中央
+        parallel = coord_mapper._get_parallel_pos(root, 0.5)  # Center along axis direction
         axis_line_perp = coord_mapper._perpendicular_pos(root)
 
         offset = self.font_size * (3.2 if axis is graph.y_axis else 1.5)
@@ -358,7 +358,7 @@ class LabelGenerator(AxisPartGenerator):
         if axis is graph.x_axis:
             label.set_dy(coord_mapper._tick_label_dy())
 
-        # y軸ラベルは下→上に読めるように倒す
+        # Rotate y-axis label so it reads from bottom to top
         if axis is graph.y_axis:
             label.transform.add_rotate(-90, x, y)
 
@@ -379,27 +379,27 @@ class AxisRenderer(GraphPartRenderer):
         axis_group = inkex.Group()
         axis_group.set("id", root.document.get_unique_id("axis"))
 
-        # 軸線
+        # Axis line
         if self.line is not None:
             axis_line = self.line.generate(graph, root, self.coord_mapper)
             axis_group.add(axis_line)
 
-        # メイン目盛り線
+        # Major tick lines
         if self.main_tick_lines is not None:
             main_ticks = self.main_tick_lines.generate(graph, root, self.coord_mapper)
             axis_group.add(main_ticks)
 
-        # サブ目盛り線
+        # Minor tick lines
         if self.sub_tick_lines is not None:
             sub_ticks = self.sub_tick_lines.generate(graph, root, self.coord_mapper)
             axis_group.add(sub_ticks)
 
-        # 目盛り数字
+        # Tick labels
         if self.tick_labels is not None:
             labels = self.tick_labels.generate(graph, root, self.coord_mapper)
             axis_group.add(labels)
 
-        # 軸ラベル
+        # Axis label
         if self.axis_label is not None:
             axis_label = self.axis_label.generate(graph, root, self.coord_mapper)
             axis_group.add(axis_label)

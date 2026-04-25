@@ -1,25 +1,27 @@
 # inkscape-plot
 
-グラフを描画するInkscapeエクステンションです。
+[日本語](./README.ja.md)
 
-- **Excelからコピペ可能**：グラフの元データをExcelから直接貼り付けられます。
-- **対数グラフに対応**：片対数・両対数どちらも作成できます。
-- **編集しやすい**：Inkscapeで動くので、グラフを描いたあとに直接編集できます。軸ラベルの位置調整や凡例の追加が簡単です。
+An Inkscape extension for drawing graphs and plots.
+
+- **Copy-paste from Excel**: Data can be pasted directly from Excel spreadsheets.
+- **Logarithmic scales supported**: Create both semi-log and log-log plots.
+- **Easy to edit**: Since it runs in Inkscape, you can edit the graph directly after rendering. Adjusting axis labels, adding legends, and other customizations are simple.
 
 <div style="text-align:center;">
    <img src="docs/assets/sample.png" alt="Sample Plot" style="max-width:480px;"/>
 </div>
 
-## インストール
+## Installation
 
-動作確認済みバージョン：Inkscape 1.4.2
+Verified Inkscape version: 1.4.2
 
-1. このリポジトリをダウンロード（またはclone）します。
-2. Inkscapeのメニューから**編集 > 環境設定 > システム**を開き、**ユーザーエクステンション**のパスを確認します。
-3. ダウンロードしたフォルダを手順2で確認したフォルダに移動させます。
+1. Download (or clone) this repository.
+2. Open **Edit > Preferences > System** from the Inkscape menu and note the **User Extensions** folder path.
+3. Move the downloaded folder into the folder noted in step 2.
 
    ```bash
-   （ユーザーエクステンション）/
+   (User Extensions)/
       inkscape-plot/
          plot.inx
          src/
@@ -27,15 +29,15 @@
             ...
          ...
    ```
-4. Inkscapeを再起動します。
+4. Restart Inkscape.
 
-## 使い方
+## Usage
 
-Inkscapeのメニューから**エクステンション > レンダリング > プロッター出力**を選択します。
+From the Inkscape menu, select **Extensions > Render > Plot**.
 
-### クイックスタート
+### Quick Start
 
-1. **データ**タブに、次をそのまま貼り付けます（列区切り：space）。
+1. Paste the following data into the **Data** tab (delimiter: space):
 
    ```text
    # x  y
@@ -46,92 +48,91 @@ Inkscapeのメニューから**エクステンション > レンダリング > �
    4   8
    ```
 
-2. **x軸**タブ：最小値=0, 最大値=4（線形）
-3. **y軸**タブ：最小値=0, 最大値=8（線形）
-4. **プロット**タブ：x列=1, y列=2
-5. **適用**をクリック
+2. **X Axis** tab: min=0, max=4 (linear)
+3. **Y Axis** tab: min=0, max=8 (linear)
+4. **Plot** tab: x column=1, y column=2
+5. Click **Apply**
 
-### 基本
+### Basics
 
-1. **データ**タブに、タブ区切りで数値を入力します。
-   - `#`で始まる行はコメントとして無視されます。
-   - Excelからそのままコピペできます。
-   - スペース区切り、カンマ区切りもサポートしています。
-2. **x軸**・**y軸**タブで、軸の範囲と目盛りの間隔を設定します。
-   - 線形スケールと対数スケールを選択できます。
-3. **プロット**タブで、データのどの列をx・yに使うか指定し、マーカーの形を選びます。
-4. **タイトル・外枠**タブで、グラフのタイトルや枠線のスタイルを設定します。
-5. ダイアログ下部の**描画する項目**で、何を描くか選択します（デフォルトは全てオン）。
-6. **適用**ボタンをクリックするとグラフが描画されます。
+1. Enter numerical data in the **Data** tab, separated by tabs.
+   - Lines starting with `#` are treated as comments and ignored.
+   - You can paste directly from Excel.
+   - Space-separated and comma-separated formats are also supported.
+2. In the **X Axis** and **Y Axis** tabs, set the range and tick intervals.
+   - You can choose between linear and logarithmic scales.
+3. In the **Plot** tab, specify which columns to use for x and y values, and choose a marker shape.
+4. In the **Title & Frame** tab, set the graph title and frame line style.
+5. Use the **Render Items** section at the bottom of the dialog to select what to draw (all are enabled by default).
+6. Click the **Apply** button to render the graph.
 
-### 応用：複数の系列を重ねる
+### Advanced: Overlaying Multiple Series
 
-このエクステンションでは1度の実行で1つの系列しか描画できませんが、
-複数回実行してグラフを重ね描きすることで、複数系列のグラフに対応できます。
+This extension renders only one data series per execution, but you can create multi-series graphs by running the extension multiple times to overlay plots.
 
-**データ**：
+**Data**:
 
 ```text
-# 時間  温度  湿度
-1      20    60
-2      22    58
-3      24    55
+# Time  Temperature  Humidity
+1      20           60
+2      22           58
+3      24           55
 ```
 
-1. **温度のグラフを描く**
-   - データタブ：上記データを入力
-   - x軸タブ：最小値=1, 最大値=3
-   - y軸タブ：最小値=0, 最大値=30（温度の範囲）
-   - プロットタブ：x列=1, y列=2
-   - 描画する項目：すべてにチェック
+1. **Draw the temperature graph**
+   - Data tab: Enter the data above
+   - X Axis tab: min=1, max=3
+   - Y Axis tab: min=0, max=30 (temperature range)
+   - Plot tab: x column=1, y column=2
+   - Render Items: Check all
 
-2. **湿度を追加**
-   - データタブ：（さっきと同じ）
-   - x軸タブ：（さっきと同じ）
-   - y軸タブ：最小値=0, 最大値=100（湿度の範囲）, 配置/外側へのオフセット(px)=90
-   - プロットタブ：x列=1, y列=3
-   - 描画する項目：「y軸」と「プロット」だけにチェック
+2. **Add humidity**
+   - Data tab: (same as above)
+   - X Axis tab: (same as above)
+   - Y Axis tab: min=0, max=100 (humidity range), Placement/Outside offset (px)=90
+   - Plot tab: x column=1, y column=3
+   - Render Items: Check only "Y Axis" and "Plot"
 
-### トラブルシューティング
+### Troubleshooting
 
-#### メニューに「プロッター出力」が表示されない
+#### "Plotter Output" does not appear in the menu
 
-- Inkscapeを再起動する
-- インストール先が「ユーザーエクステンション」フォルダ直下か確認する
-  
-#### 何も描画されない
+- Restart Inkscape
+- Verify that the installation folder is directly under the "User Extensions" folder
 
-- ページ番号が正しいか確認する
-- 描画先レイヤーが非表示になっていないか確認する
-  
-#### 点がプロットされない
+#### Nothing is rendered
 
-- データが軸の範囲内にあるか確認する
-- プロットで参照する列を確認する。列番号は1始まりです
-- マーカーの形を「（なし）」以外に設定する
-- 描画する項目の「プロット」にチェックを入れる
-  
-#### 対数軸でエラーが発生する
+- Check that the page number is correct
+- Verify that the target layer is not hidden
 
-- データに0以下の値が含まれていないか確認する
-- 軸の最小値が0以下になっていないか確認する
+#### Data points are not plotted
+
+- Ensure the data values are within the axis ranges
+- Verify the column numbers referenced in the Plot tab. Column numbering starts at 1
+- Set the marker shape to something other than "(none)"
+- Check the "Plot" option in Render Items
+
+#### Error with logarithmic axes
+
+- Ensure the data does not contain values ≤ 0
+- Verify that the axis minimum is not ≤ 0
 
 ## Contributing
 
-改善案があったりバグを見つけたりした場合は、気軽にプルリクエストやイシューを送ってください。
+Feel free to submit pull requests or issues if you have suggestions for improvements or find bugs.
 
-### 開発環境
+### Development Environment
 
 ```bash
 uv sync
-uv run ruff check .  # リンティング
-uv run ruff format . # フォーマット
+uv run ruff check .  # Linting
+uv run ruff format . # Formatting
 ```
 
 > [!NOTE]
-> uvで作成される実行環境と、実際に拡張機能を動かす実行環境は異なります。
-> そのため、外部パッケージの依存を追加することはできません。
-> 必ずInkscapeで実際に動作確認してください。
+> The runtime environment created by uv differs from the actual runtime environment for running the extension.
+> Therefore, external package dependencies cannot be added.
+> Always test the extension in Inkscape to verify it works correctly.
 
 ---
 

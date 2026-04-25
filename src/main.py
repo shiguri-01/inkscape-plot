@@ -40,20 +40,20 @@ from renderer.renderer import (
 def parse_data(
     data_text: str, x_column: int, y_column: int, delimiter: str
 ) -> tuple[np.ndarray, np.ndarray]:
-    """データテキストをパースする
+    """Parse data text.
 
     Returns:
-        tuple[np.ndarray, np.ndarray]: x座標とy座標の配列"""
+        tuple[np.ndarray, np.ndarray]: x and y coordinate arrays"""
     x_values: list[float] = []
     y_values: list[float] = []
 
     if not data_text:
         return (np.array([], dtype=float), np.array([], dtype=float))
 
-    # Inkscapeからのエスケープされた改行を実際の改行に変換
+    # Convert escaped newlines from Inkscape to actual newlines
     data_text = data_text.replace("\\n", "\n").replace("\\t", "\t")
 
-    # 区切り文字を決定
+    # Determine delimiter
     delim_map = {
         "tab": "\t",
         "space": " ",
@@ -64,13 +64,13 @@ def parse_data(
 
     for line in data_text.split("\n"):
         line = line.strip()
-        # コメント行をスキップ
+        # Skip comment lines
         if not line or line.startswith("#"):
             continue
 
-        # 区切り文字で分割
+        # Split by delimiter
         if delim == " ":
-            cols = line.split()  # 連続スペースを1つの区切りとして扱う
+            cols = line.split()  # Treat consecutive spaces as a single delimiter
         else:
             cols = line.split(delim)
 
@@ -81,7 +81,7 @@ def parse_data(
                 x_values.append(x_val)
                 y_values.append(y_val)
         except (ValueError, IndexError):
-            continue  # パースエラーはスキップ
+            continue  # Skip parse errors
 
     return (np.asarray(x_values, dtype=float), np.asarray(y_values, dtype=float))
 
@@ -95,7 +95,7 @@ def normalize_text(s: str) -> str | None:
 
 class RenderGraphExtension(inkex.EffectExtension):
     def add_arguments(self, pars):
-        # Notebook tabs (値としては使わないが、Inkscapeの仕様で必要)
+        # Notebook tabs (required by Inkscape spec but not used as values)
         pars.add_argument("--tab", type=str, default="")
 
         # Data
@@ -196,7 +196,7 @@ class RenderGraphExtension(inkex.EffectExtension):
         pars.add_argument("--page", type=int, default=1)
 
     def effect(self):
-        """エフェクトのメイン処理"""
+        """Main effect processing."""
         root = self._create_root_for_page()
         if root is None:
             return
@@ -239,7 +239,7 @@ class RenderGraphExtension(inkex.EffectExtension):
         render_graph_parts(graph, root, renderer_parts)
 
     def _create_root_for_page(self) -> GraphRoot | None:
-        """ページを基準にルート要素(GraphRoot)を作成する"""
+        """Create root element (GraphRoot) based on page."""
         page_index = self.options.page - 1
         try:
             page_bbox = self.svg.get_page_bbox(page_index)
@@ -397,7 +397,7 @@ class RenderGraphExtension(inkex.EffectExtension):
             if not mirror_enabled:
                 return None
 
-            # 反対側に描画する（offsetは同じ）
+            # Draw on opposite side (offset is the same)
             if axis == "x":
                 placement = "top" if placement == "bottom" else "bottom"
             else:
@@ -486,7 +486,7 @@ class RenderGraphExtension(inkex.EffectExtension):
             )
 
         if mirror:
-            # mirror側はラベル類は描かない
+            # Don't draw labels on the mirror side
             tick_labels = None
 
         return AxisRenderer(
@@ -499,11 +499,11 @@ class RenderGraphExtension(inkex.EffectExtension):
         )
 
     def _px(self, value: float) -> float:
-        """px値をドキュメント単位に変換する"""
+        """Convert px value to document units."""
         return self.svg.viewport_to_unit(f"{value}px")
 
     def _pt(self, value: float) -> float:
-        """pt値をドキュメント単位に変換する"""
+        """Convert pt value to document units."""
         return self.svg.viewport_to_unit(f"{value}pt")
 
     def _build_axis(
@@ -516,10 +516,10 @@ class RenderGraphExtension(inkex.EffectExtension):
         log_max: str,
         label: str,
     ) -> tuple[Axis, bool]:
-        """軸を構築し、反転フラグを返す
+        """Build axis and return inversion flag.
 
         Returns:
-            tuple[Axis, bool]: (軸, 反転フラグ)
+            tuple[Axis, bool]: (axis, inverted flag)
         """
         if scale_mode == linear_mode_key:
             min_val = linear_min
@@ -543,10 +543,10 @@ class RenderGraphExtension(inkex.EffectExtension):
         return axis, inverted
 
     def _build_graph(self) -> tuple[Graph, bool, bool]:
-        """グラフを構築し、軸の反転フラグを返す
+        """Build graph and return axis inversion flags.
 
         Returns:
-            tuple[Graph, bool, bool]: (グラフ, x軸反転, y軸反転)
+            tuple[Graph, bool, bool]: (graph, x axis inverted, y axis inverted)
         """
         x_axis, x_inverted = self._build_axis(
             scale_mode=self.options.x_scale,
